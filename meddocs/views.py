@@ -1,5 +1,6 @@
 from django.utils.decorators import method_decorator
 from rest_framework import viewsets, permissions
+from .filters import MedicalDocFilterBackend, TreatmentFilterBackend
 from .models import Patient, Treatment, MedicalDoc
 from .serializers import PatientSerializer, TreatmentSerializer, MedicalDocSerializer, \
     TreatmentDetailSerializer, MedicalDocDetailSerializer
@@ -27,21 +28,12 @@ class MedicalDocViewSet(viewsets.ModelViewSet):
     serializer_class = MedicalDocSerializer
     permission_classes = [permissions.AllowAny]
     http_method_names = ['get', 'post']
+    filter_backends = [MedicalDocFilterBackend]
 
     def get_serializer_class(self):
         if self.action in ['retrieve', 'create']:
             return MedicalDocDetailSerializer
         return MedicalDocSerializer
-
-    def get_queryset(self):
-        queryset = self.queryset
-        filter_patient = self.request.query_params.get('patient')
-        fileter_treatment = self.request.query_params.get('treatment')
-        if filter_patient:
-            queryset = queryset.filter(patient__fio__icontains=filter_patient)
-        if fileter_treatment:
-            queryset = queryset.filter(treatment=fileter_treatment)
-        return queryset
 
 
 @method_decorator(swagger_auto_schema(manual_parameters=[patient_param]), name='list')
@@ -50,15 +42,9 @@ class TreatmentViewSet(viewsets.ModelViewSet):
     serializer_class = TreatmentSerializer
     permission_classes = [permissions.AllowAny]
     http_method_names = ['get', 'post']
+    filter_backends = [TreatmentFilterBackend]
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
             return TreatmentDetailSerializer
         return TreatmentSerializer
-
-    def get_queryset(self):
-        queryset = self.queryset
-        filter_patient = self.request.query_params.get('patient')
-        if filter_patient:
-            queryset = queryset.filter(patient__fio__icontains=filter_patient)
-        return queryset

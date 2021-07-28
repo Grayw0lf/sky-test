@@ -31,3 +31,27 @@ class BodyDocSerializer(serializers.ModelSerializer):
     class Meta:
         model = BodyDoc
         fields = '__all__'
+
+
+class BodyDocNotDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BodyDoc
+        fields = '__all__'
+
+
+class MedicalDocDetailSerializer(MedicalDocSerializer):
+    body = BodyDocNotDetailSerializer(source='bodydoc')
+
+    class Meta:
+        model = MedicalDoc
+        fields = '__all__'
+
+
+class TreatmentDetailSerializer(TreatmentSerializer):
+    docs = MedicalDocSerializer(many=True, source='medicaldocs')
+
+    class Meta:
+        model = Treatment
+        fields = '__all__'
+
+

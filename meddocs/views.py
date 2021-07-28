@@ -1,6 +1,8 @@
+from django.utils.decorators import method_decorator
 from rest_framework import viewsets, permissions
-from .models import Patient, Treatment, MedicalDoc, BodyDoc
-from .serializers import PatientSerializer, TreatmentSerializer, MedicalDocSerializer
+from .models import Patient, Treatment, MedicalDoc
+from .serializers import PatientSerializer, TreatmentSerializer, MedicalDocSerializer, \
+    TreatmentDetailSerializer, MedicalDocDetailSerializer
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
@@ -15,13 +17,21 @@ class PatientViewSet(viewsets.ModelViewSet):
     queryset = Patient.objects.all()
     serializer_class = PatientSerializer
     permission_classes = [permissions.AllowAny]
+    http_method_names = ['get', 'post']
 
 
+@method_decorator(swagger_auto_schema(manual_parameters=[patient_param, treatment_param]),
+                  name='list')
 class MedicalDocViewSet(viewsets.ModelViewSet):
     queryset = MedicalDoc.objects.all()
     serializer_class = MedicalDocSerializer
     permission_classes = [permissions.AllowAny]
     http_method_names = ['get', 'post']
+
+    def get_serializer_class(self):
+        if self.action in ['retrieve', 'create']:
+            return MedicalDocDetailSerializer
+        return MedicalDocSerializer
 
     def get_queryset(self):
         queryset = self.queryset
@@ -33,16 +43,18 @@ class MedicalDocViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(treatment=fileter_treatment)
         return queryset
 
-    @swagger_auto_schema(manual_parameters=[patient_param, treatment_param])
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
 
-
+@method_decorator(swagger_auto_schema(manual_parameters=[patient_param]), name='list')
 class TreatmentViewSet(viewsets.ModelViewSet):
     queryset = Treatment.objects.all()
     serializer_class = TreatmentSerializer
     permission_classes = [permissions.AllowAny]
     http_method_names = ['get', 'post']
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return TreatmentDetailSerializer
+        return TreatmentSerializer
 
     def get_queryset(self):
         queryset = self.queryset
@@ -50,7 +62,3 @@ class TreatmentViewSet(viewsets.ModelViewSet):
         if filter_patient:
             queryset = queryset.filter(patient__fio__icontains=filter_patient)
         return queryset
-
-    @swagger_auto_schema(manual_parameters=[patient_param])
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
